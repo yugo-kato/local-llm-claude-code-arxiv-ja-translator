@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk *)",
+      "Bash(Get-ChildItem \"H:\\\\20260525arXiv\\\\paper_info_md\\\\*_ja.md\")",
+      "Bash(Measure-Object)",
+      "Bash(Select-Object -ExpandProperty Count)"
+    ]
+  }
+}

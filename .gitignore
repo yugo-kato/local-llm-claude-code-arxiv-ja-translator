@@ -1,0 +1,11 @@
+# Saved arXiv HTML page and browser-generated assets
+Computer Vision and Pattern Recognition.html
+Computer Vision and Pattern Recognition_files/
+Astrophysics.html
+Astrophysics_files/
+
+# Generated paper metadata and translations
+paper_info_md/
+
+# Runtime logs
+logs/
