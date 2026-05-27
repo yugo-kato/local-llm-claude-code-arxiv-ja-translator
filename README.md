@@ -1,54 +1,105 @@
-# arXiv Listing Parser and Abstract Translator
+# arXiv RSS Markdown Exporter and Abstract Translator
 
-This repository contains small PowerShell utilities for converting a saved arXiv listing page into per-paper Markdown files, then optionally generating Japanese translations of each abstract with Claude Code.
+This repository contains small utilities for downloading arXiv RSS feeds, converting each RSS item into a per-paper Markdown file, and optionally generating Japanese translations of abstracts with Claude Code.
 
-To process many Markdown files within the limited context length of a local LLM, this workflow invokes Claude Code in non-interactive execution mode with `claude -p` and further delegates each file-level task to a subagent. This avoids packing the contents of all files into a single conversation context and instead processes each file as an independent, smaller task.
+The v0.2 workflow no longer uses saved arXiv HTML pages. It downloads RSS directly from `https://rss.arxiv.org/rss/`.
+
+To process many Markdown files within the limited context length of a local LLM, the translation workflow invokes Claude Code in non-interactive execution mode with `claude -p` and delegates each file-level task to a subagent. This keeps each paper translation as an independent, smaller task.
 
 ## Contents
 
-- `parse_arxiv_html.ps1` parses a saved arXiv listing HTML file and writes one Markdown metadata file per paper.
+- `rss_to_arxiv_md.py` downloads an arXiv RSS feed or reads a saved RSS XML file and writes one Markdown metadata file per paper.
+- `run_arxiv_rss_md_with_project_setup.bat` creates dated project folders for `cs.CV` and `astro-ph`, copies the required tools and `.claude` files, downloads RSS, and writes Markdown files.
 - `run_arxiv_translate_batches.ps1` runs Claude Code in batches to create `_ja.md` files that preserve the original metadata and abstract while adding a Japanese abstract translation.
 - `.claude/agents/arxiv-abstract-ja-translate.md` defines the Claude Code subagent used for one-file-at-a-time abstract translation.
 
 ## Prerequisites
 
-- PowerShell 7 or Windows PowerShell
-- A saved arXiv listing HTML page, for example:
-  - `Computer Vision and Pattern Recognition.html`
+- Windows PowerShell or PowerShell 7
+- Python 3
+- Internet access to `rss.arxiv.org` for live RSS download
 - Claude Code CLI, only if you want to run the translation batch script
-- LM Studio running a local LLM with the `qwen/qwen3.6-27b` model
+- LM Studio running a local LLM with the `qwen/qwen3.6-27b` model, if you use the default translation settings
 
 For LM Studio setup with Claude Code, see the official LM Studio integration guide:
 <https://lmstudio.ai/docs/integrations/claude-code>
 
-The saved HTML page and its browser-generated asset folder are intentionally not included in this repository.
+## Generate Markdown From arXiv RSS
 
-## Save the arXiv Listing Page
+### Recommended: project setup batch
 
-Open the arXiv new submissions page for Computer Vision and Pattern Recognition:
+Run the setup batch from this repository:
 
-<https://arxiv.org/list/cs.CV/new>
+```bat
+run_arxiv_rss_md_with_project_setup.bat
+```
 
-Save the page as complete HTML from your browser. For example, this may create:
+The batch file uses the directory where the batch file itself is located as the source tool directory.
+
+It creates dated project folders under the root of the current drive by default:
 
 ```text
-Computer Vision and Pattern Recognition.html
-Computer Vision and Pattern Recognition_files/
+<drive>:\yyyyMMddarXiv
+<drive>:\yyyyMMddarXiv2
 ```
 
-Use the saved `.html` file as the input for the parser.
+By default:
 
-## Parse the arXiv HTML Listing
+- `<drive>:\yyyyMMddarXiv` receives `cs.CV` RSS output.
+- `<drive>:\yyyyMMddarXiv2` receives `astro-ph` RSS output.
+- Markdown files are written under each project's `paper_info_md\` directory.
+- The downloaded RSS XML is saved as `cs.CV_rss.xml` or `astro-ph_rss.xml`.
 
-Run the parser from the repository root:
+To write project folders under a specific output root, pass it as the first argument:
+
+```bat
+run_arxiv_rss_md_with_project_setup.bat D:\arxiv_projects
+```
+
+### Direct Python usage
+
+Default `cs.CV` RSS:
 
 ```powershell
-.\parse_arxiv_html.ps1 `
-  -InputHtml "Computer Vision and Pattern Recognition.html" `
-  -OutputDir "paper_info_md"
+python .\rss_to_arxiv_md.py `
+  --output-dir .\paper_info_md `
+  --save-rss .\cs.CV_rss.xml
 ```
 
-The script creates `paper_info_md/` and writes files named like:
+`astro-ph` RSS:
+
+```powershell
+python .\rss_to_arxiv_md.py `
+  --astro-ph `
+  --output-dir .\paper_info_md `
+  --save-rss .\astro-ph_rss.xml
+```
+
+Use another arXiv category:
+
+```powershell
+python .\rss_to_arxiv_md.py `
+  --category cs.LG `
+  --output-dir .\paper_info_md `
+  --save-rss .\cs.LG_rss.xml
+```
+
+Offline or repeatable run from an already saved RSS XML file:
+
+```powershell
+python .\rss_to_arxiv_md.py `
+  --rss-file .\cs.CV_rss.xml `
+  --output-dir .\paper_info_md
+```
+
+Useful options:
+
+- `--only-new` exports only RSS items whose announce type is `new`.
+- `--clear-output-dir` deletes existing `*.md` files in the output directory before writing new files.
+- `--rss-url` uses an explicit RSS URL instead of `--category`.
+- `--save-rss` saves the downloaded RSS XML for inspection or later offline use.
+
+The script creates files named like:
 
 ```text
 001_2605.12345.md
@@ -56,11 +107,11 @@ The script creates `paper_info_md/` and writes files named like:
 ...
 ```
 
-Each generated file includes metadata such as title, authors, arXiv links, subjects, comments, and the original abstract.
+Each generated file includes metadata such as title, authors, arXiv links, subjects, RSS section, listing date, and the original abstract.
 
 ## Generate Japanese Abstract Translations
 
-After parsing the HTML listing, run the batch translation script:
+After generating Markdown files, run the batch translation script from the project folder that contains `paper_info_md\`:
 
 ```powershell
 .\run_arxiv_translate_batches.ps1 `
@@ -71,16 +122,16 @@ After parsing the HTML listing, run the batch translation script:
 
 By default, the batch script is intended to run through Claude Code CLI using a local LLM served by LM Studio with the model name `qwen/qwen3.6-27b`.
 
-If you use a different runtime environment, model provider, or model name, update `run_arxiv_translate_batches.ps1` accordingly before running the translation workflow.
+If you use a different runtime environment, model provider, or model name, update the `-Model` argument or the script settings before running the translation workflow.
 
-Configure `.claude\settings.local.json` with appropriate permissions for your local folder paths. For example:
+The setup batch generates `.claude\settings.local.json` for each dated project folder. If you run the tools manually, configure `.claude\settings.local.json` with appropriate permissions for your local folder paths. For example:
 
 ```json
 {
   "permissions": {
     "allow": [
       "Bash(awk *)",
-      "Bash(Get-ChildItem \"H:\\\\20260525arXiv\\\\paper_info_md\\\\*_ja.md\")",
+      "Bash(Get-ChildItem \"D:\\\\arxiv_projects\\\\yyyyMMddarXiv\\\\paper_info_md\\\\*_ja.md\")",
       "Bash(Measure-Object)",
       "Bash(Select-Object -ExpandProperty Count)"
     ]
@@ -97,6 +148,7 @@ Useful options:
 - `-SkipExistingJa` avoids overwriting existing translated files.
 - `-DryRun` prints the planned prompt without invoking Claude Code.
 - `-ClaudeExe` can be used when `claude.exe` is not available on `PATH`.
+- `-Model` sets the Claude Code model name.
 
 The translated files are written next to the originals with `_ja` before the extension:
 
@@ -121,5 +173,6 @@ Japanese translation...
 
 ## Notes
 
-- The parser is designed for saved arXiv listing pages and may need adjustment if arXiv changes its HTML structure.
-- Generated output directories such as `paper_info_md/` and `logs/` are usually best kept out of version control.
+- This v0.2 workflow uses RSS, not saved HTML listing pages.
+- RSS exports all feed items by default, including `new`, `cross`, `replace`, and `replace-cross` announce types.
+- Generated output directories such as `paper_info_md\` and `logs\` are usually best kept out of version control.

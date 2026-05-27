@@ -1,6 +1,6 @@
 param(
     # Default: run this script from the project root, for example:
-    # PS H:\20260522arXiv> .\run_arxiv_translate_batches_25_20260522.ps1 -SkipExistingJa
+    # PS D:\arxiv_projects\yyyyMMddarXiv> .\run_arxiv_translate_batches.ps1 -SkipExistingJa
     [string]$ProjectRoot = (Get-Location).Path,
 
     # Leave empty to use: <ProjectRoot>\paper_info_md
