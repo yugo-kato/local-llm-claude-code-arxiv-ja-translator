@@ -20,9 +20,21 @@ for /f %%i in ('powershell.exe -NoProfile -Command "Get-Date -Format yyyyMMdd"')
 REM ============================================================
 REM Source tools directory
 REM ============================================================
-set "TOOLS_DIR=%~dp0."
+set "SCRIPT_DIR=%~dp0"
+set "SCRIPT_PATH=%~f0"
+set "TOOLS_DIR=%SCRIPT_DIR%."
+
+REM When this setup batch lives under misc\, the repository root is one
+REM directory up. Project-local copies still use their own directory.
+if not exist "%TOOLS_DIR%\rss_to_arxiv_md.py" (
+    if exist "%SCRIPT_DIR%..\rss_to_arxiv_md.py" (
+        set "TOOLS_DIR=%SCRIPT_DIR%.."
+    )
+)
+
+for %%I in ("%TOOLS_DIR%") do set "TOOLS_DIR=%%~fI"
 set "TOOL_PY=%TOOLS_DIR%\rss_to_arxiv_md.py"
-set "TOOL_BAT=%TOOLS_DIR%\run_arxiv_rss_md_with_project_setup.bat"
+set "TOOL_BAT=%SCRIPT_PATH%"
 set "TOOL_PS1=%TOOLS_DIR%\run_arxiv_translate_batches.ps1"
 set "TOOL_CLAUDE_DIR=%TOOLS_DIR%\.claude"
 
@@ -67,6 +79,11 @@ if not exist "%TOOL_PS1%" (
     exit /b 1
 )
 
+if not exist "%TOOL_BAT%" (
+    echo ERROR: Setup batch script not found: "%TOOL_BAT%"
+    exit /b 1
+)
+
 if not exist "%TOOL_CLAUDE_DIR%\agents\arxiv-abstract-ja-translate.md" (
     echo ERROR: Claude subagent file not found:
     echo "%TOOL_CLAUDE_DIR%\agents\arxiv-abstract-ja-translate.md"
@@ -94,7 +111,7 @@ echo Output : %CS_CV_OUT%
 echo RSS    : %CS_CV_RSS%
 echo ============================================================
 
-python "%CS_CV_DIR%\rss_to_arxiv_md.py" ^
+call python "%CS_CV_DIR%\rss_to_arxiv_md.py" ^
   --output-dir "%CS_CV_OUT%" ^
   --save-rss "%CS_CV_RSS%"
 
@@ -107,7 +124,7 @@ if errorlevel 1 (
 REM ============================================================
 REM Wait 3 seconds for arXiv access interval
 REM ============================================================
-timeout /t 3 /nobreak > nul
+powershell.exe -NoProfile -Command "Start-Sleep -Seconds 3"
 
 REM ============================================================
 REM 2. astro-ph
@@ -120,7 +137,7 @@ echo Output : %ASTRO_PH_OUT%
 echo RSS    : %ASTRO_PH_RSS%
 echo ============================================================
 
-python "%ASTRO_PH_DIR%\rss_to_arxiv_md.py" ^
+call python "%ASTRO_PH_DIR%\rss_to_arxiv_md.py" ^
   --astro-ph ^
   --output-dir "%ASTRO_PH_OUT%" ^
   --save-rss "%ASTRO_PH_RSS%"

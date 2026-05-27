@@ -9,7 +9,7 @@ To process many Markdown files within the limited context length of a local LLM,
 ## Contents
 
 - `rss_to_arxiv_md.py` downloads an arXiv RSS feed or reads a saved RSS XML file and writes one Markdown metadata file per paper.
-- `run_arxiv_rss_md_with_project_setup.bat` creates dated project folders for `cs.CV` and `astro-ph`, copies the required tools and `.claude` files, downloads RSS, and writes Markdown files.
+- `misc/run_arxiv_rss_md_with_project_setup.bat` creates dated project folders for `cs.CV` and `astro-ph`, copies the required tools and `.claude` files, downloads RSS, and writes Markdown files.
 - `run_arxiv_translate_batches.ps1` runs Claude Code in batches to create `_ja.md` files that preserve the original metadata and abstract while adding a Japanese abstract translation.
 - `.claude/agents/arxiv-abstract-ja-translate.md` defines the Claude Code subagent used for one-file-at-a-time abstract translation.
 
@@ -31,10 +31,10 @@ For LM Studio setup with Claude Code, see the official LM Studio integration gui
 Run the setup batch from this repository:
 
 ```bat
-run_arxiv_rss_md_with_project_setup.bat
+misc\run_arxiv_rss_md_with_project_setup.bat
 ```
 
-The batch file uses the directory where the batch file itself is located as the source tool directory.
+The batch file resolves the repository root as the source tool directory when it is run from `misc\`. Project-local copies use their own directory as the source tool directory.
 
 It creates dated project folders under the root of the current drive by default:
 
@@ -53,7 +53,7 @@ By default:
 To write project folders under a specific output root, pass it as the first argument:
 
 ```bat
-run_arxiv_rss_md_with_project_setup.bat D:\arxiv_projects
+misc\run_arxiv_rss_md_with_project_setup.bat D:\arxiv_projects
 ```
 
 ### Direct Python usage
