@@ -34,7 +34,7 @@ Run the setup batch from this repository:
 misc\run_arxiv_rss_md_with_project_setup.bat
 ```
 
-The batch file resolves the repository root as the source tool directory when it is run from `misc\`. Project-local copies use their own directory as the source tool directory.
+The batch file resolves the repository root as the source tool directory when it is run from `misc\`. It copies `rss_to_arxiv_md.py`, `run_arxiv_translate_batches.ps1`, and `.claude` files into each dated project folder.
 
 It creates dated project folders under the root of the current drive by default:
 
