@@ -6,7 +6,7 @@ REM arXiv RSS -> Markdown project setup script
 REM
 REM This script:
 REM   1. Creates dated output folders for cs.CV and astro-ph
-REM   2. Copies tool files from this script directory into each output folder
+REM   2. Copies project tool files into each output folder
 REM   3. Copies .claude\agents into each output folder
 REM   4. Generates .claude\settings.local.json for each output folder
 REM   5. Downloads RSS XML and writes per-paper Markdown files
@@ -21,7 +21,6 @@ REM ============================================================
 REM Source tools directory
 REM ============================================================
 set "SCRIPT_DIR=%~dp0"
-set "SCRIPT_PATH=%~f0"
 set "TOOLS_DIR=%SCRIPT_DIR%."
 
 REM When this setup batch lives under misc\, the repository root is one
@@ -34,7 +33,6 @@ if not exist "%TOOLS_DIR%\rss_to_arxiv_md.py" (
 
 for %%I in ("%TOOLS_DIR%") do set "TOOLS_DIR=%%~fI"
 set "TOOL_PY=%TOOLS_DIR%\rss_to_arxiv_md.py"
-set "TOOL_BAT=%SCRIPT_PATH%"
 set "TOOL_PS1=%TOOLS_DIR%\run_arxiv_translate_batches.ps1"
 set "TOOL_CLAUDE_DIR=%TOOLS_DIR%\.claude"
 
@@ -76,11 +74,6 @@ if not exist "%TOOL_PY%" (
 
 if not exist "%TOOL_PS1%" (
     echo ERROR: PowerShell translation script not found: "%TOOL_PS1%"
-    exit /b 1
-)
-
-if not exist "%TOOL_BAT%" (
-    echo ERROR: Setup batch script not found: "%TOOL_BAT%"
     exit /b 1
 )
 
@@ -187,12 +180,6 @@ if errorlevel 1 (
 copy /Y "%TOOL_PS1%" "%PROJECT_DIR%\" > nul
 if errorlevel 1 (
     echo ERROR: Failed to copy "%TOOL_PS1%" to "%PROJECT_DIR%"
-    exit /b 1
-)
-
-copy /Y "%TOOL_BAT%" "%PROJECT_DIR%\" > nul
-if errorlevel 1 (
-    echo ERROR: Failed to copy "%TOOL_BAT%" to "%PROJECT_DIR%"
     exit /b 1
 )
 
